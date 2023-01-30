@@ -36,8 +36,32 @@ class Database:
             language varchar(3),
             PRIMARY KEY (id)
             );
-"""
+        """
         self.execute(sql, commit=True)
+
+    def create_table_category(self):
+        sql = """
+        CREATE TABLE Category (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(50) NOT NULL UNIQUE,
+            desc TEXT,
+            image TEXT
+        );
+        """
+        self.execute(sql=sql, commit=True)
+    
+    def create_product_table(self):
+        sql = """
+        CREATE TABLE Product (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            desc TEXT NOT NULL,
+            price REAL NOT NULL,
+            image TEXT NOT NULL,
+            cat_id INTEGER NOT NULL
+        );
+        """
+        self.execute(sql=sql, commit=True)
 
     @staticmethod
     def format_args(sql, parameters: dict):
@@ -60,11 +84,29 @@ class Database:
         """
         return self.execute(sql, fetchall=True)
 
+    def select_cats(self):
+        sql = """SELECT * FROM Category;"""
+        return self.execute(sql=sql, fetchall=True)
+
+    def select_products(self, **kwargs):
+        sql = """SELECT * FROM Product WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchall=True)
+
+    def select_cat(self, **kwargs):
+        sql = """SELECT * FROM Category WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchone=True)
+
+    def select_product(self, **kwargs):
+        sql = """SELECT * FROM Product WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchone=True)
+
     def select_user(self, **kwargs):
         # SQL_EXAMPLE = "SELECT * FROM Users where id=1 AND Name='John'"
         sql = "SELECT * FROM Users WHERE "
         sql, parameters = self.format_args(sql, kwargs)
-
         return self.execute(sql, parameters=parameters, fetchone=True)
 
     def count_users(self):
