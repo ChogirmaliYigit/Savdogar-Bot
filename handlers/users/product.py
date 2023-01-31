@@ -1,4 +1,3 @@
-import aiogram
 import requests
 from io import BytesIO
 from aiogram import types
@@ -14,7 +13,7 @@ async def get_product(message: types.Message, state: FSMContext):
     product = db.select_product(title=product_title)
     markup = make_amount_markup()
     text = f"<b>{product[1]} - {product[-3]} so'm</b>\n\n{product[2]}"
-    await  state.update_data({"text": text, "price": product[-3], "image": product[-2], "title": product[1]})
+    await  state.update_data({"product_id": product[0], "text": text, "price": product[-3], "image": product[-2], "title": product[1]})
     text += f"\n\n<i><b>{product[1]} ({product[-3]}) x 1 = {product[-3]} so'm</b></i>"
     await message.answer_photo(photo=product[-2], caption=text, reply_markup=markup)
     await AllStates.next()

@@ -5,4 +5,5 @@ class AllStates(StatesGroup):
     category = State()
     product = State()
     amount = State()
+    cart = State()
 

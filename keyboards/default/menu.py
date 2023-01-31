@@ -23,10 +23,10 @@ def product_markup(products):
         markup.insert(KeyboardButton(text=product[1]))
     return markup
 
-back_button_inline = InlineKeyboardButton(text="⬅️ Orqaga", callback_data="cart")
-cart_button_inline = InlineKeyboardButton(text="🛒 Savatga qo'shish", callback_data="back")
+back_button_inline = InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back")
 
 def make_amount_markup(number=1):
+    cart_button_inline = InlineKeyboardButton(text="🛒 Savatga qo'shish", callback_data=f"cart_{number}")
     markup = InlineKeyboardMarkup(row_width=3)
     add = InlineKeyboardButton(text="➕", callback_data=f"add_{number}")
     remove = InlineKeyboardButton(text="➖", callback_data=f"remove_{number}")

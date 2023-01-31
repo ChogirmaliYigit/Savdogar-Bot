@@ -63,6 +63,17 @@ class Database:
         """
         self.execute(sql=sql, commit=True)
 
+    def create_user_cart(self):
+        sql = """
+        CREATE TABLE Cart (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL
+        );
+        """
+        self.execute(sql=sql, commit=True)
+
     @staticmethod
     def format_args(sql, parameters: dict):
         sql += " AND ".join([
@@ -78,11 +89,33 @@ class Database:
         """
         self.execute(sql, parameters=(id, name, email, language), commit=True)
 
+    def add_product_to_cart(self, user_id, product_id, quantity):
+        sql = """
+        INSERT INTO Cart (user_id, product_id, quantity) VALUES(?, ?, ?)
+        """
+        self.execute(sql, parameters=(user_id, product_id, quantity), commit=True)
+
     def select_all_users(self):
         sql = """
         SELECT * FROM Users
         """
         return self.execute(sql, fetchall=True)
+
+    def select_user_products(self, **kwargs):
+        sql = """SELECT * FROM Cart WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchall=True)
+
+    def select_cart_product(self, **kwargs):
+        sql = """SELECT * FROM Cart WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchone=True)
+
+    def update_cart_product(self, user_id, product_id, quantity):
+        sql = """
+        UPDATE Cart SET quantity=? WHERE user_id=? AND product_id=?
+        """
+        self.execute(sql=sql, parameters=(quantity, user_id, product_id), commit=True)
 
     def select_cats(self):
         sql = """SELECT * FROM Category;"""
