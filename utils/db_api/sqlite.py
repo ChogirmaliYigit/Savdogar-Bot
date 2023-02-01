@@ -74,6 +74,31 @@ class Database:
         """
         self.execute(sql=sql, commit=True)
 
+    def create_order_table(self):
+        sql = """
+        CREATE TABLE OrderProduct (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            phone VARCHAR(50) NOT NULL,
+            address TEXT,
+            lat REAL NOT NULL,
+            lon REAL NOT NULL,
+            paid INTEGER DEFAULT 0 NOT NULL
+        );
+        """
+        self.execute(sql=sql, commit=True)
+
+    def create_order_item_table(self):
+        sql = """
+        CREATE TABLE OrderItem (
+            id INTEGER PRIMARY KEY,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            order_id INTEGER NOT NULL
+        );
+        """
+        self.execute(sql=sql, commit=True)
+
     @staticmethod
     def format_args(sql, parameters: dict):
         sql += " AND ".join([
@@ -152,6 +177,11 @@ class Database:
         UPDATE Users SET email=? WHERE id=?
         """
         return self.execute(sql, parameters=(email, id), commit=True)
+
+    def clear_cart(self, **kwargs):
+        sql = """DELETE FROM Cart WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        self.execute(sql=sql, commit=True)
 
     def delete_users(self):
         self.execute("DELETE FROM Users WHERE TRUE", commit=True)

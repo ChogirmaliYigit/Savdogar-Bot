@@ -1,7 +1,13 @@
 from aiogram import types
 from loader import db, dp
-from keyboards.default.menu import cats_markup, product_markup
+from aiogram.dispatcher import FSMContext
+from keyboards.default.menu import cats_markup, product_markup, main
 from states.shop import AllStates
+
+@dp.message_handler(text="⬅️ Orqaga", state=AllStates.category)
+async def back_to_main(message: types.Message, state: FSMContext):
+    await message.answer(text="Siz asosiy menyudasiz", reply_markup=main)
+    await state.finish()
 
 @dp.message_handler(state=AllStates.category)
 async def get_cat_product(message: types.Message):
