@@ -4,9 +4,14 @@ import logging
 import asyncio
 from aiogram import types
 from loader import db, dp, bot
-from keyboards.default.menu import phone_button, location_button, confirm, back_markup_inline, payment_markup
+from keyboards.default.menu import phone_button, location_button, confirm, make_back_button, payment_markup, main
 from states.shop import AllStates
 from aiogram.dispatcher import FSMContext
+from geopy.geocoders import Nominatim
+from utils.misc.payment import Product
+from data.shipping import *
+from data.config import ADMINS
+
 
 @dp.callback_query_handler(text="order", state=AllStates.cart)
 async def make_order(call: types.CallbackQuery, state: FSMContext):
@@ -131,8 +136,15 @@ async def get_address(message: types.Message, state: FSMContext):
             await AllStates.order_note.set()
         await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=msg_id, reply_markup=inline_markup)    
         if phone and address:
-            asyncio.sleep(1)
-            await bot.edit_message_text(text=f"Telefon: <b>+{phone}</b>\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>", chat_id=message.chat.id, message_id=msg_id, reply_markup=confirm)
+            data = await state.get_data()
+            lat = data.get("lat")
+            lon = data.get("lon")
+            geolocator = Nominatim(user_agent="bot")
+            manzil = geolocator.geocode(str(lat) + "," + str(lon))
+            if phone.startswith("+"):
+                await bot.edit_message_text(text=f"Telefon: <b>{phone}</b>\nYetkazish manzili: {manzil}\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>", chat_id=message.chat.id, message_id=msg_id, reply_markup=confirm)
+            else:
+                await bot.edit_message_text(text=f"Telefon: <b>+{phone}</b>\nYetkazish manzili: {manzil}\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>", chat_id=message.chat.id, message_id=msg_id, reply_markup=confirm)
             await AllStates.order_confirm.set()
 
 
@@ -143,9 +155,14 @@ async def order_confirm(call: types.CallbackQuery, state: FSMContext):
     lat = data.get("lat")
     lon = data.get("lon")
     confirm = call.data.split("_")[-1]
+    geolocator = Nominatim(user_agent="bot")
+    manzil = geolocator.geocode(str(lat) + "," + str(lon))
     if confirm == "true":
         try:
-            db.add_order_product(user_id=call.from_user.id, phone=f"+{phone}", lat=lat, lon=lon, paid="0")
+            if phone.startswith("+"):
+                db.add_order_product(user_id=call.from_user.id, phone=f"{phone}", address=manzil, lat=lat, lon=lon, paid="0")
+            else:
+                db.add_order_product(user_id=call.from_user.id, phone=f"+{phone}", address=manzil, lat=lat, lon=lon, paid="0")
         except sqlite3.Error as error:
             logging.error(error)
         products = db.select_user_products(user_id=call.from_user.id)
@@ -156,8 +173,11 @@ async def order_confirm(call: types.CallbackQuery, state: FSMContext):
             price = mahsulot[-3] * product[-1]
             total_price += price
             text += f"<b>{mahsulot[1]}</b> x {product[-1]} = {price} so'm\n"
-        text += f"\nUmumiy narx: {total_price} so'm\nYetkazish manzili: {lat}, {lon}"
-        await call.message.edit_text(text=text, reply_markup=payment_markup)
+        geolocator = Nominatim(user_agent="bot")
+        manzil = geolocator.geocode(str(lat) + "," + str(lon))
+        text += f"\nUmumiy narx: {total_price} so'm\nYetkazish manzili: <i>{manzil}</i>\n\nMarhamat, to'lovni amalga oshirishingiz mumkin.😊"
+        payments = db.select_all_provider()
+        await call.message.edit_text(text=text, reply_markup=payment_markup(payments))
         await AllStates.paid_state.set()
         # await call.answer(text="✅ Buyurtmangiz qabul qilindi")
     elif confirm == "false":
@@ -176,7 +196,7 @@ async def order_confirm(call: types.CallbackQuery, state: FSMContext):
             cart_markup.insert(types.InlineKeyboardButton(text=f"❌ {mahsulot[1]} ❌", callback_data=f"{product[1]}_{product[2]}"))
         text += f"\nUmumiy narx: {total_price} so'm"
         clear_cart = types.InlineKeyboardButton(text="🗑 Tozalash", callback_data="clear_cart")
-        cart_markup.row(clear_cart, back_markup_inline)
+        cart_markup.row(clear_cart, make_back_button(call_data="order"))
         await call.message.answer(text=text, reply_markup=cart_markup)
         await AllStates.cart.set()
     elif confirm == "retry":
@@ -190,5 +210,64 @@ async def order_confirm(call: types.CallbackQuery, state: FSMContext):
 async def back_to_confirm(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     phone = data.get("phone")
-    await call.message.edit_text(text=f"Telefon: <b>+{phone}</b>\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>")
+    if phone.startswith("+"):
+        await call.message.edit_text(text=f"Telefon: <b>{phone}</b>\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>")
+    else:
+        await call.message.edit_text(text=f"Telefon: <b>+{phone}</b>\n\n<i>Ma'lumotlaringizni tasdiqlaysizmi?</i>")
     await AllStates.order_confirm.set()
+
+@dp.callback_query_handler(state=AllStates.paid_state)
+async def get_payment(call: types.CallbackQuery):
+    provider = db.select_provider(title=call.data)
+    products = db.select_user_products(user_id=call.from_user.id)
+    text = str()
+    prices = []
+    for product in products:
+        mahsulot = db.select_product(id=product[2])
+        price = mahsulot[-3] * product[-1]
+        prices.append(types.LabeledPrice(label=mahsulot[1], amount=int(price * 100)))
+        text += f"{mahsulot[1]} x {product[-1]} = {price} so'm\n"
+
+    order = Product(
+        title="To'lov qilish jarayoni",
+        description=text,
+        start_parameter="create_order_invoice",
+        currency="UZS",
+        prices=prices,
+        provider_token=provider[-1],
+        need_email=True,
+        need_name=True,
+        need_phone_number=True,
+        need_shipping_address=True,
+        is_flexible=True
+    )
+    await bot.send_invoice(chat_id=call.from_user.id, **order.generate_invoice(), payload=f"payload:{call.from_user.id}")
+
+@dp.shipping_query_handler(state=AllStates.paid_state)
+async def choose_shipping(query: types.ShippingQuery):
+    if query.shipping_address.country_code != "UZ":
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        ok=False,
+                                        error_message="Chet elga yetkazib bera olmaymiz")
+    elif query.shipping_address.city.lower() == "urganch":
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        shipping_options=[FAST_SHIPPING, REGULAR_SHIPPING, PICKUP_SHIPPING],
+                                        ok=True)
+    else:
+        await bot.answer_shipping_query(shipping_query_id=query.id,
+                                        shipping_options=[REGULAR_SHIPPING],
+                                        ok=True)
+    
+
+@dp.pre_checkout_query_handler()
+async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery, state: FSMContext):
+    await bot.answer_pre_checkout_query(pre_checkout_query_id=pre_checkout_query.id,
+                                        ok=True)
+    await bot.send_message(chat_id=pre_checkout_query.from_user.id,
+                           text="Xaridingiz uchun rahmat!", reply_markup=main)
+    await bot.send_message(chat_id=ADMINS[0],
+                           text=f"Quyidagi mahsulot sotildi: {pre_checkout_query.invoice_payload}\n"
+                                f"ID: {pre_checkout_query.id}\n"
+                                f"Telegram user: {pre_checkout_query.from_user.first_name}\n"
+                                f"Xaridor: {pre_checkout_query.order_info.name}\nTel: {pre_checkout_query.order_info.phone_number}\nEmail: {pre_checkout_query.order_info.email}")
+    await state.finish()

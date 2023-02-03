@@ -2,10 +2,14 @@ import requests
 from io import BytesIO
 from aiogram import types
 from loader import db, dp
-from keyboards.default.menu import cats_markup, product_markup, make_amount_markup
+from keyboards.default.menu import make_amount_markup, cats_markup
 from states.shop import AllStates
 from aiogram.dispatcher import FSMContext
 
+@dp.message_handler(text="⬅️ Orqaga", state=AllStates.product)
+async def back_from_product(message: types.Message):
+    await message.answer(text="Bizning barcha kategoriyalar shulardan iborat. Nima xarid qilishni xohlaysiz?", reply_markup=cats_markup)
+    await AllStates.category.set()
 
 @dp.message_handler(state=AllStates.product)
 async def get_product(message: types.Message, state: FSMContext):

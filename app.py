@@ -11,15 +11,16 @@ async def on_startup(dispatcher):
     await set_default_commands(dispatcher)
 
     # Ma'lumotlar bazasini yaratamiz:
-    try:
-        # db.create_table_users()
-        # db.create_table_category()
-        # db.create_product_table()
-        # db.create_user_cart()
-        db.create_order_table()
-        db.create_order_item_table()
-    except Exception as err:
-        print(err)
+    # try:
+    #     # db.create_table_users()
+    #     # db.create_table_category()
+    #     # db.create_product_table()
+    #     # db.create_user_cart()
+    #     # db.create_order_table()
+    #     # db.create_order_item_table()
+    #     db.create_payment_providers()
+    # except Exception as err:
+    #     print(err)
 
     # Bot ishga tushgani haqida adminga xabar berish
     await on_startup_notify(dispatcher)

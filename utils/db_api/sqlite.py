@@ -99,6 +99,16 @@ class Database:
         """
         self.execute(sql=sql, commit=True)
 
+    def create_payment_providers(self):
+        sql = """
+        CREATE TABLE Payment (
+            id INTEGER PRIMARY KEY,
+            title VARCHAR(50) NOT NULL,
+            token TEXT NOT NULL
+        );
+        """
+        self.execute(sql=sql, commit=True)
+
     @staticmethod
     def format_args(sql, parameters: dict):
         sql += " AND ".join([
@@ -119,6 +129,29 @@ class Database:
         INSERT INTO Cart (user_id, product_id, quantity) VALUES(?, ?, ?)
         """
         self.execute(sql, parameters=(user_id, product_id, quantity), commit=True)
+
+    def add_order_product(self, user_id, phone, address, lat, lon, paid):
+        sql = """
+        INSERT INTO OrderProduct (user_id, phone, address, lat, lon, paid) VALUES(?, ?, ?, ?, ?, ?)
+        """
+        self.execute(sql, parameters=(user_id, phone, address, lat, lon, paid), commit=True)
+
+    def add_payment_provider(self, title, token):
+        sql = """
+        INSERT INTO Payment (title, token) VALUES (?, ?);
+        """
+        self.execute(sql=sql, parameters=(title, token), commit=True)
+
+    def select_all_provider(self):
+        sql = """
+        SELECT * FROM Payment;
+        """
+        return self.execute(sql=sql, fetchall=True)
+
+    def select_provider(self, **kwargs):
+        sql = """SELECT * FROM Payment WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchone=True)
 
     def select_all_users(self):
         sql = """
@@ -181,7 +214,7 @@ class Database:
     def clear_cart(self, **kwargs):
         sql = """DELETE FROM Cart WHERE """
         sql, parameters = self.format_args(sql, kwargs)
-        self.execute(sql=sql, commit=True)
+        self.execute(sql=sql, parameters=parameters, commit=True)
 
     def delete_users(self):
         self.execute("DELETE FROM Users WHERE TRUE", commit=True)

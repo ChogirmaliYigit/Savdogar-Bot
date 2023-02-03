@@ -10,9 +10,10 @@ async def back_to_main(message: types.Message, state: FSMContext):
     await state.finish()
 
 @dp.message_handler(state=AllStates.category)
-async def get_cat_product(message: types.Message):
+async def get_cat_product(message: types.Message, state: FSMContext):
     cat_title = message.text
     cat_id = db.select_cat(title=cat_title)[0]
+    await state.update_data({"cat_id": cat_id})
     products = db.select_products(cat_id=cat_id)
     markup = product_markup(products)
     if products:
