@@ -92,6 +92,7 @@ class Database:
         sql = """
         CREATE TABLE OrderItem (
             id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
             product_id INTEGER NOT NULL,
             quantity INTEGER NOT NULL,
             order_id INTEGER NOT NULL
@@ -131,10 +132,28 @@ class Database:
         self.execute(sql, parameters=(user_id, product_id, quantity), commit=True)
 
     def add_order_product(self, user_id, phone, address, lat, lon, paid):
-        sql = """
-        INSERT INTO OrderProduct (user_id, phone, address, lat, lon, paid) VALUES(?, ?, ?, ?, ?, ?)
-        """
+        sql = """INSERT INTO OrderProduct (user_id, phone, address, lat, lon, paid) VALUES(?, ?, ?, ?, ?, ?);"""
         self.execute(sql, parameters=(user_id, phone, address, lat, lon, paid), commit=True)
+
+    def add_order_item(self, product_id, quantity, order_id):
+        sql = """INSERT INTO OrderItem (product_id, quantity, order_id) VALUES (?, ?, ?);"""
+        self.execute(sql=sql, parameters=(product_id, quantity, order_id), commit=True)
+
+    def select_order_item(self, **kwargs):
+        sql = """SELECT * FROM OrderItem WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchall=True)
+
+    def select_order_products(self, **kwargs):
+        sql = """SELECT * FROM OrderProduct WHERE """
+        sql, parameters = self.format_args(sql, kwargs)
+        return self.execute(sql, parameters=parameters, fetchall=True)
+
+    def update_order_paid(self, paid, user_id, id):
+        sql = """
+        UPDATE OrderProduct SET paid=? WHERE user_id=? AND id=?
+        """
+        self.execute(sql=sql, parameters=(paid, user_id, id), commit=True)
 
     def add_payment_provider(self, title, token):
         sql = """

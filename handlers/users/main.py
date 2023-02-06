@@ -32,3 +32,25 @@ async def cart_main(message: types.Message, state: FSMContext):
         await AllStates.cart.set()
     else:
         await message.answer(text="Savatingiz bo'sh. Nimadir xarid qiling")
+
+
+@dp.message_handler(text="📋 Buyurtmalarim")
+async def get_user_orders(message: types.Message):
+    # user_products = db.select_order_products(user_id=message.from_user.id)
+    # if user_products:
+    #     for product in user_products:
+    #         user_order_item = db.select_order_item(order_id=product[0])
+    #         product_id = user_order_item[1]
+    #         quantity = user_order_item[1]
+    #         products = db.select_product(id=product_id)
+    #         await message.answer(text=f"#️⃣ Buyurtma raqami: {product[0]}\n*️⃣ Mahsulot nomi: {products[1]}\n🔢 Mahsulot miqdori: {quantity}\n📱 Telefon: {product[2]}\n📍 Yetkaziladigan manzil: {product[3]}")
+    # else:
+    await message.answer(text="<i>Bot test rejimida ishlayotgani sababli buyurtmalar qabul qilinmaydi va yetkazib berilmaydi, uzr!</i>", parse_mode="html")
+
+@dp.message_handler(text="ℹ️ Biz haqimizda")
+async def about_section(message: types.Message):
+    await message.answer(text="Dasturchi: @chogirmali_yigit\nKanal: @chogirmali_blog")
+
+@dp.message_handler(text="⚙️ Sozlamalar")
+async def get_settings(message: types.Message):
+    await message.answer(text="Bu bo'lim hali tayyor emas")

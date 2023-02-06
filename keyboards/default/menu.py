@@ -46,8 +46,8 @@ location_button.add(KeyboardButton(text="📍 Manzilni jo'natish", request_locat
 
 confirm = InlineKeyboardMarkup(row_width=1)
 confirm.add(InlineKeyboardButton(text="✅ Tasdiqlash ✅", callback_data="confirm_true"))
-confirm.add(InlineKeyboardButton(text="🔁 O'zgartirish 🔁", callback_data="confirm_retry"))
 confirm.add(InlineKeyboardButton(text="❌ Bekor qilish ❌", callback_data="confirm_false"))
+# confirm.add(InlineKeyboardButton(text="🔁 O'zgartirish 🔁", callback_data="confirm_retry"))
 
 
 back_inline_button = InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back")
@@ -60,4 +60,5 @@ def payment_markup(payments):
     markup.row(cancel)
     markup.row(back_inline_button)
     return markup
+
 

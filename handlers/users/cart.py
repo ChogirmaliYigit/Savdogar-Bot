@@ -1,3 +1,4 @@
+import sqlite3
 from aiogram import types
 from loader import db, dp
 from keyboards.default.menu import cats_markup, make_back_button, product_markup
@@ -93,7 +94,7 @@ async def get_cart_products(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text="clear_cart", state=AllStates.cart)
 async def clear_user_cart(call: types.CallbackQuery):
-    db.clear_cart(user_id=call.from_user.id)
+    db.clear_cart(user_id=int(call.from_user.id))
     await call.answer("Savatingiz bo'shatildi")
     await call.message.delete()
     await call.message.answer("Savatingiz bo'sh. Nimadir xarid qiling", reply_markup=cats_markup)
@@ -101,7 +102,7 @@ async def clear_user_cart(call: types.CallbackQuery):
 
 @dp.callback_query_handler(text_contains="back", state=AllStates.cart)
 async def back_from_cart(call: types.CallbackQuery, state: FSMContext):
-    call_data = call.data.split("_")[-1]    # main, category, product
+    call_data = call.data.split("_")[-1]
     if call_data == "main":
         await call.message.delete()
         await call.message.answer(text="Siz asosiy menyudasiz")
@@ -122,7 +123,10 @@ async def back_from_cart(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(state=AllStates.cart)
 async def cart_detail(call: types.CallbackQuery, state: FSMContext):
     user_id, product_id = call.data.split("_")
-    db.clear_cart(user_id=user_id, product_id=product_id)
+    try:
+        db.clear_cart(user_id=int(user_id), product_id=int(product_id))
+    except sqlite3.OperationalError:
+        await call.answer("Serverda muammo! Noqulaylik uchun uzr so'raymiz.", show_alert=True)
     order = types.InlineKeyboardButton(text="🚚 Buyurtma berish", callback_data="order")
     products = db.select_user_products(user_id=call.from_user.id)
     if products:
