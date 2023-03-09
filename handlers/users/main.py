@@ -30,7 +30,6 @@ async def cart_main(message: types.Message, state: FSMContext):
         clear_cart = types.InlineKeyboardButton(text="🗑 Tozalash", callback_data="clear_cart")
         cart_markup.row(clear_cart, make_back_button(call_data="main"))
         await state.update_data({"call_data": "product"})
-        await message.answer(text='Savatingiz 🛒', reply_markup=types.ReplyKeyboardRemove())
         await message.answer(text=text, reply_markup=cart_markup)
         await AllStates.cart.set()
     else:
