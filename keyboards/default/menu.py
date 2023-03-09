@@ -9,7 +9,7 @@ main.row("⚙️ Sozlamalar", "ℹ️ Biz haqimizda")
 back_button = KeyboardButton(text="⬅️ Orqaga")
 cart_button = KeyboardButton(text="🛒 Savat")
 
-cats_markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+cats_markup = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, one_time_keyboard=True)
 cats = db.select_cats()
 cats_markup.add(back_button, cart_button)
 for cat in cats:
