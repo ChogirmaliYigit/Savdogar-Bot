@@ -63,6 +63,7 @@ async def get_cart_products(message: types.Message, state: FSMContext):
         clear_cart = types.InlineKeyboardButton(text="🗑 Tozalash", callback_data="clear_cart")
         cart_markup.row(clear_cart, make_back_button(call_data="category"))
         await state.update_data({"call_data": "category"})
+        await message.answer(text='Savatingiz 🛒', reply_markup=types.ReplyKeyboardRemove())
         await message.answer(text=text, reply_markup=cart_markup)
         await AllStates.cart.set()
     else:
@@ -87,6 +88,7 @@ async def get_cart_products(message: types.Message, state: FSMContext):
         clear_cart = types.InlineKeyboardButton(text="🗑 Tozalash", callback_data="clear_cart")
         cart_markup.row(clear_cart, make_back_button(call_data="product"))
         await state.update_data({"call_data": "product"})
+        await message.answer(text='Savatingiz 🛒', reply_markup=types.ReplyKeyboardRemove())
         await message.answer(text=text, reply_markup=cart_markup)
         await AllStates.cart.set()
     else:
@@ -145,6 +147,7 @@ async def cart_detail(call: types.CallbackQuery, state: FSMContext):
         data = await state.get_data()
         call_data = data.get("call_data")
         cart_markup.row(clear_cart, make_back_button(call_data=call_data))
+        await call.message.answer(text='Savatingiz 🛒', reply_markup=types.ReplyKeyboardRemove())
         await call.message.edit_text(text=text, reply_markup=cart_markup)
         await AllStates.cart.set()
     else:
