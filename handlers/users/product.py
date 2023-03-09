@@ -22,6 +22,17 @@ async def get_product(message: types.Message, state: FSMContext):
     await message.answer_photo(photo=product[-2], caption=text, reply_markup=markup)
     await AllStates.next()
 
+@dp.message_handler(state=AllStates.cart)
+async def get_product(message: types.Message, state: FSMContext):
+    product_title = message.text
+    product = db.select_product(title=product_title)
+    markup = make_amount_markup()
+    text = f"<b>{product[1]} - {product[-3]} so'm</b>\n\n{product[2]}"
+    await  state.update_data({"product_id": product[0], "text": text, "price": product[-3], "image": product[-2], "title": product[1]})
+    text += f"\n\n<i><b>{product[1]} ({product[-3]}) x 1 = {product[-3]} so'm</b></i>"
+    await message.answer_photo(photo=product[-2], caption=text, reply_markup=markup)
+    await AllStates.amount.set()
+
 @dp.callback_query_handler(state=AllStates.amount)
 async def get_amount(call: types.CallbackQuery, state: FSMContext):
     await call.answer(cache_time=1)

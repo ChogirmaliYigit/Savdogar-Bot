@@ -4,13 +4,15 @@ from aiogram.dispatcher import FSMContext
 from keyboards.default.menu import cats_markup, make_back_button
 from states.shop import AllStates
 
-@dp.message_handler(text="🛍 Xarid qilish")
-async def main_menu(message: types.Message):
+@dp.message_handler(text="🛍 Xarid qilish", state='*')
+async def main_menu(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer(text="Bizning barcha kategoriyalar shulardan iborat. Nima xarid qilishni xohlaysiz?", reply_markup=cats_markup)
     await AllStates.category.set()
 
-@dp.message_handler(text="🛒 Savat")
+@dp.message_handler(text="🛒 Savat", state='*')
 async def cart_main(message: types.Message, state: FSMContext):
+    await state.finish()
     products = db.select_user_products(user_id=message.from_user.id)
     order_button = types.InlineKeyboardButton(text="🚚 Buyurtma berish", callback_data="order")
     if products:
@@ -34,8 +36,9 @@ async def cart_main(message: types.Message, state: FSMContext):
         await message.answer(text="Savatingiz bo'sh. Nimadir xarid qiling")
 
 
-@dp.message_handler(text="📋 Buyurtmalarim")
-async def get_user_orders(message: types.Message):
+@dp.message_handler(text="📋 Buyurtmalarim", state='*')
+async def get_user_orders(message: types.Message, state: FSMContext):
+    await state.finish()
     # user_products = db.select_order_products(user_id=message.from_user.id)
     # if user_products:
     #     for product in user_products:
@@ -47,10 +50,12 @@ async def get_user_orders(message: types.Message):
     # else:
     await message.answer(text="<i>Bot test rejimida ishlayotgani sababli buyurtmalar qabul qilinmaydi va yetkazib berilmaydi, uzr!</i>", parse_mode="html")
 
-@dp.message_handler(text="ℹ️ Biz haqimizda")
-async def about_section(message: types.Message):
+@dp.message_handler(text="ℹ️ Biz haqimizda", state='*')
+async def about_section(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer(text="Dasturchi: @chogirmali_yigit\nKanal: @chogirmali_blog")
 
-@dp.message_handler(text="⚙️ Sozlamalar")
-async def get_settings(message: types.Message):
+@dp.message_handler(text="⚙️ Sozlamalar", state='*')
+async def get_settings(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer(text="Bu bo'lim hali tayyor emas")

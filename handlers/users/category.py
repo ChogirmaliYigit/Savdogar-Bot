@@ -21,3 +21,16 @@ async def get_cat_product(message: types.Message, state: FSMContext):
         await AllStates.next()
     else:
         await message.answer("Hozircha bu kategoriyada mahsulot yo'q")
+
+@dp.message_handler(state=AllStates.cart)
+async def get_cat_product(message: types.Message, state: FSMContext):
+    cat_title = message.text
+    cat_id = db.select_cat(title=cat_title)[0]
+    await state.update_data({"cat_id": cat_id})
+    products = db.select_products(cat_id=cat_id)
+    markup = product_markup(products)
+    if products:
+        await message.answer("Quyidagi mahsulotlardan birini tanlang", reply_markup=markup)
+        await AllStates.product.set()
+    else:
+        await message.answer("Hozircha bu kategoriyada mahsulot yo'q")
